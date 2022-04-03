@@ -8,3 +8,7 @@
 .no-hide{
     display: inline-block;
 }
+.colorSelected{
+    background-color: #CFCFCF;
+    color: white;
+}

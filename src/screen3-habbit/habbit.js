@@ -2,12 +2,146 @@ import styled from "styled-components";
 import Logo from "./../assets/TrackIt.png";
 import { buildStyles, CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import {useContext} from 'react';
+import { useContext, useState } from 'react';
 import dataContext from "../contexts/dataContext";
+import axios from 'axios';
 
 export default function Habbit() {
-    const {data} = useContext(dataContext);
-    console.log(data.token)
+    const { data } = useContext(dataContext);
+    const [plusButton, setPlusButton] = useState(false);
+    const [render, setRerender] = useState(false);
+    const [appear, setAppear] = useState(true)
+    const [putNewHabbitOnScreen, setPutNewHabbitOnScreen] = useState(false);
+    let listOfDays = [];
+    let allHabbits = [];
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${data.token}`
+        }
+    };
+
+    const dataDays = [
+        { daynumber: 0, dayword: 'D' },
+        { daynumber: 1, dayword: 'S' },
+        { daynumber: 2, dayword: 'T' },
+        { daynumber: 3, dayword: 'Q' },
+        { daynumber: 4, dayword: 'Q' },
+        { daynumber: 5, dayword: 'S' },
+        { daynumber: 6, dayword: 'S' },
+    ];
+
+    let days = [];
+
+    function DaySquare({ daynumber, dayword }) {
+        const [isSelected, setIsSelected] = useState(false);
+        function isTrueOrFalse() {
+            if (isSelected === false) {
+                listOfDays.push(daynumber);
+                console.log(listOfDays)
+            } else {
+                listOfDays = listOfDays.filter(element => element !== daynumber ? element : '');
+                console.log(listOfDays)
+            }
+        }
+        return (
+            <p className={isSelected ? `day colorSelected ${daynumber}` : `day ${daynumber}`} onClick={() => {
+                setIsSelected(!isSelected)
+                isTrueOrFalse()
+            }}>{dayword}</p>
+        )
+    }
+
+    function Rerender() {
+        return (
+            <div className="days">
+                {dataDays.map(element => {
+                    return (
+                        <DaySquare daynumber={element.daynumber} dayword={element.dayword} />
+                    )
+                })}
+            </div>
+        )
+    }
+
+    function FormContent() {
+        const [inputHabbit, setInputHabbit] = useState('');
+        console.log('formcontent', listOfDays)
+        return (
+            <>
+                <input type='text' placeholder="nome do hábito" value={inputHabbit} onChange={(e) => setInputHabbit(e.target.value)} />
+                <Rerender />
+                <div className="buttons">
+                    <p onClick={() => setRerender(!render)}> cancelar </p>
+                    {appear ? 
+                        < button onClick={(e) => {
+                        setAppear(false)
+                        const requestion = axios.post("https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits", {
+                            name: inputHabbit,
+                            days: listOfDays,
+                        }, config);
+                        requestion.then(answer => {
+                            console.log(answer.data);
+                            allHabbits.push(answer.data);
+                        })
+                        requestion.catch(err => {
+                            console.error(err.data)
+                        })
+                        e.preventDefault();
+                    }}>Salvar</button>
+                     : 'carregando'}
+
+            </div>
+            </>
+        )
+    }
+
+    function NewHabbit({ habbitText }) {
+        function NewDaySquere({ daynumber, dayword, thisClass }) {
+            return (
+                <p className={`${thisClass} ${daynumber}`}>{dayword}</p>
+            )
+        }
+        return (
+            <>
+                <h1>{habbitText}</h1>
+                <div className="days">
+                    { }
+                    {dataDays.map(element => {
+                        for (let i = 0; i < days.length; i++) {
+                            if (element !== days[i]) {
+                                return (
+                                    <NewDaySquere daynumber={element.daynumber} dayword={element.dayword} thisClass={`day`} />
+                                )
+                            } else {
+                                return (
+                                    <NewDaySquere daynumber={element.daynumber} dayword={element.dayword} thisClass={"day colorSelected"} />
+                                )
+                            }
+                        }
+                    })}
+                </div>
+            </>
+        )
+    }
+
+    function InformationHabbits() {
+        if (allHabbits.length === 0) {
+            return (
+                <p>Você não tem nenhum hábito cadastrado ainda. Adicione um hábito para começar a trackear!</p>
+            )
+        } else {
+            return (
+                allHabbits.map(element => {
+                    days = element.days;
+                    return (
+                        <NewHabbit habbitText={element.name} />
+                    )
+                })
+            )
+        }
+    }
+
     return (
         <Habbitstyle>
             <header>
@@ -21,10 +155,15 @@ export default function Habbit() {
             <main>
                 <div className="plus">
                     <p>Meus hábitos</p>
-                    <button>+</button>
+                    <button onClick={() => {
+                        setPlusButton(!plusButton)
+                    }}>+</button>
                 </div>
+                <form className={plusButton ? "put-habbit" : "hide"}>
+                    <FormContent />
+                </form>
                 <div className="information">
-                    <p>Você não tem nenhum hábito cadastrado ainda. Adicione um hábito para começar a trackear!</p>
+                    <InformationHabbits />
                 </div>
             </main>
             <footer>
@@ -45,7 +184,6 @@ export default function Habbit() {
                     <p>Histórico</p>
                 </div>
             </footer>
-
         </Habbitstyle>
     )
 }
@@ -154,5 +292,62 @@ const Habbitstyle = styled.div`
         border-radius: 50%;
         border: 5px solid #52B6FF;
     }
- 
+    .put-habbit{
+        width: 340px;
+        height: 180px;
+        border-radius: 5px;
+        background-color: white;
+        display: flex;
+        flex-direction: column;
+        padding: 18px;
+        position: relative;
+    }
+    .put-habbit input{
+        width: 300px;
+        height: 45px;
+        border: 1px solid #D4D4D4;
+        focus: none;
+        padding: 10px;
+        margin-bottom: 8px;
+        font-family: 'Lexend Deca';
+        font-size: 16px;
+    }
+    .put-habbit .days{
+        display: flex;
+    }
+    .put-habbit .days .day{
+        width: 30px;
+        height: 30px;
+        border: 1px solid #D4D4D4;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 8px;
+        cursor: pointer;
+    }
+    .put-habbit .buttons{
+        position: absolute;
+        bottom: 18px;
+        right:18px;
+        display: flex;
+        align-items: center;
+    }
+    .put-habbit .buttons p{
+        font-size: 16px;
+        color: #52B6FF;
+        font-family: 'Lexend Deca';
+        margin-right: 8px;
+        cursor: pointer;
+    }
+    .put-habbit .buttons button{
+        width: 84px;
+        height: 35px;
+        background-color: #52B6FF;
+        color: white;
+        font-family: 'Lexend Deca';
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 `
