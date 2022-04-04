@@ -6,6 +6,7 @@ import { useContext, useState, useEffect } from 'react';
 import dataContext from "../contexts/dataContext";
 import axios from 'axios';
 import { ThreeDots } from 'react-loader-spinner';
+import { Link } from "react-router-dom"
 
 export default function Habbit() {
     const { data } = useContext(dataContext);
@@ -164,7 +165,7 @@ export default function Habbit() {
     }
 
     return (
-        <Habbitstyle appearStyle={appear}>
+        <HabbitStyle appearStyle={appear}>
             <header>
                 <div className="head">
                     <img className="first-img" src={Logo} alt="logo da marca" />
@@ -189,27 +190,31 @@ export default function Habbit() {
             </main>
             <footer>
                 <div className="foot">
-                    <p>Hábitos</p>
-                    <div className="progressbar" style={{ width: 100, height: 100 }}>
-                        <CircularProgressbar
-                            value={66}
-                            maxValue="100"
-                            text="Hoje"
-                            styles={buildStyles({
-                                textSize: '20px',
-                                textColor: 'white',
-                                pathColor: 'white',
-                                trailColor: '#52B6FF'
-                            })} />
-                    </div>
+                    <Link to="/habitos">
+                        <p>Hábitos</p>
+                    </Link>
+                    <Link to="/hoje">
+                        <div className="progressbar" style={{ width: 100, height: 100 }}>
+                            <CircularProgressbar
+                                value={66}
+                                maxValue="100"
+                                text="Hoje"
+                                styles={buildStyles({
+                                    textSize: '20px',
+                                    textColor: 'white',
+                                    pathColor: 'white',
+                                    trailColor: '#52B6FF'
+                                })} />
+                        </div>
+                    </Link>
                     <p>Histórico</p>
                 </div>
             </footer>
-        </Habbitstyle>
+        </HabbitStyle>
     )
 }
 
-const Habbitstyle = styled.div`
+const HabbitStyle = styled.div`
     background-color: #E5E5E5;
     height: 100vh;
     display: flex;
@@ -434,5 +439,8 @@ const Habbitstyle = styled.div`
         display: flex;
         justify-content: center;
         align-items: center
+    }
+    a{
+        text-decoration: none;
     }
 `

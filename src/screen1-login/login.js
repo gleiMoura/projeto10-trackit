@@ -36,7 +36,6 @@ export default function Login({setData}) {
                             });
                             requestion.then(answer => {
                                 setData(answer.data);
-                                console.log(answer.data);
                                 navigate("/habitos")
                             })
                             requestion.catch(err => {
