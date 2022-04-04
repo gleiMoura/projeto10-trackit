@@ -2,18 +2,19 @@ import styled from "styled-components";
 import Logo from "./../assets/TrackIt.png";
 import { buildStyles, CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import dataContext from "../contexts/dataContext";
 import axios from 'axios';
+import { ThreeDots } from 'react-loader-spinner';
 
 export default function Habbit() {
     const { data } = useContext(dataContext);
     const [plusButton, setPlusButton] = useState(false);
     const [render, setRerender] = useState(false);
-    const [appear, setAppear] = useState(true)
-    const [putNewHabbitOnScreen, setPutNewHabbitOnScreen] = useState(false);
+    const [appear, setAppear] = useState(true);
+    const [allHabbits, setAllHabbits] = useState([]);
     let listOfDays = [];
-    let allHabbits = [];
+    console.log(allHabbits)
 
     const config = {
         headers: {
@@ -31,7 +32,15 @@ export default function Habbit() {
         { daynumber: 6, dayword: 'S' },
     ];
 
-    let days = [];
+    useEffect(() => {
+        const requestion = axios.get("https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits", config);
+        requestion.then(answer => {
+            setAllHabbits(answer.data);
+        })
+        requestion.catch(err => {
+            console.error(err.data)
+        })
+    }, []);
 
     function DaySquare({ daynumber, dayword }) {
         const [isSelected, setIsSelected] = useState(false);
@@ -45,7 +54,7 @@ export default function Habbit() {
             }
         }
         return (
-            <p className={isSelected ? `day colorSelected ${daynumber}` : `day ${daynumber}`} onClick={() => {
+            <p className={isSelected ? `day colorSelected ${daynumber}` : `day ${daynumber}`} disabled={!appear} onClick={() => {
                 setIsSelected(!isSelected)
                 isTrueOrFalse()
             }}>{dayword}</p>
@@ -69,57 +78,70 @@ export default function Habbit() {
         console.log('formcontent', listOfDays)
         return (
             <>
-                <input type='text' placeholder="nome do hábito" value={inputHabbit} onChange={(e) => setInputHabbit(e.target.value)} />
+                <input type='text' placeholder="nome do hábito" value={inputHabbit} disabled={!appear} onChange={(e) => setInputHabbit(e.target.value)} />
                 <Rerender />
                 <div className="buttons">
                     <p onClick={() => setRerender(!render)}> cancelar </p>
-                    {appear ? 
+                    {appear ?
                         < button onClick={(e) => {
-                        setAppear(false)
-                        const requestion = axios.post("https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits", {
-                            name: inputHabbit,
-                            days: listOfDays,
-                        }, config);
-                        requestion.then(answer => {
-                            console.log(answer.data);
-                            allHabbits.push(answer.data);
-                        })
-                        requestion.catch(err => {
-                            console.error(err.data)
-                        })
-                        e.preventDefault();
-                    }}>Salvar</button>
-                     : 'carregando'}
+                            setAppear(false);
+                            const requestion = axios.post("https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits", {
+                                name: inputHabbit,
+                                days: listOfDays,
+                            }, config);
+                            requestion.then(answer => {
+                                console.log(answer.data);
+                                setAllHabbits([...allHabbits, answer.data]);
+                                console.log(allHabbits);
+                                setAppear(true);
+                                setPlusButton(true);
+                                e.preventDefault();
+                            })
+                            requestion.catch(err => {
+                                console.error(err.data);
+                                setAppear(true);
+                                alert("dados incorretos!")
+                            })
+                        }}>Salvar</button>
+                        : <button className="loading">
+                            <ThreeDots
+                                height="40"
+                                width="40"
+                                color='white'
+                                ariaLabel='loading'
+                            />
+                        </button>}
 
-            </div>
+                </div>
             </>
         )
     }
 
-    function NewHabbit({ habbitText }) {
-        function NewDaySquere({ daynumber, dayword, thisClass }) {
+    function NewHabbit({ habbitText, days, habbitId }) {
+        function NewDaySquere({ dayword, thisClass }) {
             return (
-                <p className={`${thisClass} ${daynumber}`}>{dayword}</p>
+                <p className={thisClass}>{dayword}</p>
             )
         }
         return (
             <>
-                <h1>{habbitText}</h1>
-                <div className="days">
-                    { }
-                    {dataDays.map(element => {
-                        for (let i = 0; i < days.length; i++) {
-                            if (element !== days[i]) {
-                                return (
-                                    <NewDaySquere daynumber={element.daynumber} dayword={element.dayword} thisClass={`day`} />
-                                )
-                            } else {
-                                return (
-                                    <NewDaySquere daynumber={element.daynumber} dayword={element.dayword} thisClass={"day colorSelected"} />
-                                )
-                            }
-                        }
-                    })}
+                <div className="information-unit">
+                    <ion-icon name="trash-outline" onClick={() => {
+                        const requestion = axios.delete(`https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/${habbitId}`, config);
+                        requestion.then(console.log('ok'));
+                        requestion.catch(err => {
+                            console.error(err.data)
+                        });
+                        setAllHabbits(allHabbits.filter(element => element.id !== habbitId ? element : ''))
+                    }}></ion-icon>
+                    <h1>{habbitText}</h1>
+                    <div className="days">
+                        {dataDays.map(element => {
+                            return (
+                                <NewDaySquere dayword={element.dayword} thisClass={element.daynumber === days[0] || element.daynumber === days[1] || element.daynumber === days[2] || element.daynumber === days[3] || element.daynumber === days[4] || element.daynumber === days[5] || element.daynumber === days[6] ? "day colorSelected" : "day"} />
+                            )
+                        })}
+                    </div>
                 </div>
             </>
         )
@@ -133,9 +155,8 @@ export default function Habbit() {
         } else {
             return (
                 allHabbits.map(element => {
-                    days = element.days;
                     return (
-                        <NewHabbit habbitText={element.name} />
+                        <NewHabbit habbitText={element.name} days={element.days} habbitId={element.id} />
                     )
                 })
             )
@@ -143,7 +164,7 @@ export default function Habbit() {
     }
 
     return (
-        <Habbitstyle>
+        <Habbitstyle appearStyle={appear}>
             <header>
                 <div className="head">
                     <img className="first-img" src={Logo} alt="logo da marca" />
@@ -206,6 +227,7 @@ const Habbitstyle = styled.div`
         display: flex;
         flex-direction: column;
         align-items: center;
+        overflow-y: scroll;
     }
     .head{
         width: 375px;
@@ -254,6 +276,30 @@ const Habbitstyle = styled.div`
         cursor: pointer;
     }
     .information{
+        margin-bottom: 120px;
+    }
+    .information-unit{
+        width: 375px;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 10px 9px;
+        font-family: 'Lexend Deca';
+        background-color: white;
+        color: black;
+        margin: 10px 0;
+        border-radius: 5px;
+        position: relative;
+    }
+    .information-unit ion-icon{
+        font-size: 24px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #666666;
+        cursor: pointer;
+    }
+    .information p{
         width: 375px;
         height: 70px;
         display: flex;
@@ -261,6 +307,29 @@ const Habbitstyle = styled.div`
         padding: 20px 18px;
         font-family: 'Lexend Deca';
         color: #666666;
+    }
+    .information h1{
+        width: 300px;
+        margin-bottom: 5px;
+        font-wight: 700;
+        font-family: 'Lexend Deca';
+        font-size: 20px;
+        background-color: white;
+        margin-bottom: 15px;
+        word-wrap: break-word;
+    }
+    .information .days{
+        display: flex;
+    }
+    .information .days .day{
+        width: 30px;
+        height: 30px;
+        border: 1px solid #D4D4D4;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 8px;
     }
     footer{
         width: 100%;
@@ -300,7 +369,9 @@ const Habbitstyle = styled.div`
         display: flex;
         flex-direction: column;
         padding: 18px;
+        padding-bottom: 80px;
         position: relative;
+        background-color: ${props => props.appearStyle ? 'white' : 'rgba(255, 255, 255, 0.6)'}
     }
     .put-habbit input{
         width: 300px;
@@ -311,6 +382,7 @@ const Habbitstyle = styled.div`
         margin-bottom: 8px;
         font-family: 'Lexend Deca';
         font-size: 16px;
+        background-color: ${props => props.appearStyle ? 'white' : 'rgba(212, 212, 212, 0.6)'}
     }
     .put-habbit .days{
         display: flex;
@@ -349,5 +421,18 @@ const Habbitstyle = styled.div`
         border: none;
         border-radius: 5px;
         cursor: pointer;
+    }
+    .put-habbit .buttons .loading{
+        width: 84px;
+        height: 35px;
+        background-color:  rgba(82, 183, 255, 0.6);
+        color: white;
+        font-family: 'Lexend Deca';
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center
     }
 `
