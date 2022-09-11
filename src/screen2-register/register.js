@@ -3,9 +3,11 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
     const [dataRegister, setDataRegister] = useState([]);
+		const navigate = useNavigate();
     function SendRegister() {
         const [email, setEmail] = useState("");
         const [password, setPassword] = useState("");
@@ -27,7 +29,7 @@ export default function Register() {
                     if (boolean) {
                         alert("digite as informções corretamente e lembre-se que a senha deve ter no mínimo 6 dígitos!")
                     }
-                    e.preventDefault()
+                    e.preventDefault();
                 }}>Cadastrar</button>
                     <button className={no_boolean ? 'no-hide' : 'hide'} onClick={(e) => {
                         if (no_boolean) {
@@ -39,12 +41,17 @@ export default function Register() {
                             })
                             requestion.then(answer => {
                                 setDataRegister(answer.data);
-                                console.log(answer.data)
+                                console.log(answer.data);
+																navigate('/');
                             })
-                            requestion.catch(err => {
-                                console.error(err.data);
+                            requestion.catch(e => {
+																if(e.response.status === 422) {
+																	alert("Preencha todos os campos corretamente!")
+																}else {
+																	alert("Pode ser que você já possua cadastro. Tente fazer login!")
+																}
                             })
-                            e.preventDefault()
+                            e.preventDefault();
                         }
                     }}>Cadastrar</button>
                 <p>

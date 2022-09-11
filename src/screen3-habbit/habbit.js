@@ -15,7 +15,6 @@ export default function Habbit() {
     const [appear, setAppear] = useState(true);
     const [allHabbits, setAllHabbits] = useState([]);
     let listOfDays = [];
-    console.log(allHabbits)
 
     const config = {
         headers: {
@@ -48,10 +47,8 @@ export default function Habbit() {
         function isTrueOrFalse() {
             if (isSelected === false) {
                 listOfDays.push(daynumber);
-                console.log(listOfDays)
             } else {
                 listOfDays = listOfDays.filter(element => element !== daynumber ? element : '');
-                console.log(listOfDays)
             }
         }
         return (
@@ -76,7 +73,6 @@ export default function Habbit() {
 
     function FormContent() {
         const [inputHabbit, setInputHabbit] = useState('');
-        console.log('formcontent', listOfDays)
         return (
             <>
                 <input type='text' placeholder="nome do hábito" value={inputHabbit} disabled={!appear} onChange={(e) => setInputHabbit(e.target.value)} />
@@ -93,13 +89,12 @@ export default function Habbit() {
                             requestion.then(answer => {
                                 console.log(answer.data);
                                 setAllHabbits([...allHabbits, answer.data]);
-                                console.log(allHabbits);
                                 setAppear(true);
                                 setPlusButton(true);
                                 e.preventDefault();
                             })
                             requestion.catch(err => {
-                                console.error(err.data);
+                                console.error(err.response.data);
                                 setAppear(true);
                                 alert("dados incorretos!")
                             })
@@ -129,7 +124,6 @@ export default function Habbit() {
                 <div className="information-unit">
                     <ion-icon name="trash-outline" onClick={() => {
                         const requestion = axios.delete(`https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/${habbitId}`, config);
-                        requestion.then(console.log('ok'));
                         requestion.catch(err => {
                             console.error(err.data)
                         });
